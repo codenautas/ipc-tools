@@ -12,6 +12,7 @@ export type ProductoARepartir={
 
 export type InfoRepartiendo = {
     valorElegido?: number|null
+    valorRepartido?: number|null
 }
 
 export type JerarquiaARepartir={
@@ -25,13 +26,19 @@ export type ArbolReparto=InfoRepartiendo & ({
     }
 }|ProductoARepartir)
 
+export type ArbolResultado=InfoRepartiendo & {
+    contenido?:{
+        [codigo in CodigoReparto]?:ArbolResultado
+    }|null
+}
+
 /**
  * Los productos a repartir están marcado con un código en codigoReparto
  * Pasos:
  *   1. Sumar el Valor de los que quedan
  * 
  */
-export function reparto(_a:any){
+export function reparto(_a:ArbolReparto){
 
 }
 
@@ -52,9 +59,22 @@ export function repartoSumarValorElegido(arbol:ArbolReparto){
     }
 }
 
+export function elegirColumna(arbol:ArbolReparto, columna:keyof InfoRepartiendo){
+    var nuevoNodo:ArbolResultado = {[columna]: arbol[columna]}
+    if(arbol.contenido){
+        var codigo:CodigoReparto;
+        nuevoNodo.contenido={}
+        for(codigo in arbol.contenido){
+            var hijo = arbol.contenido[codigo]!
+            var nuevoHijo = elegirColumna(hijo, columna);
+            nuevoNodo.contenido[codigo] = nuevoHijo;
+        }
+    }
+    return nuevoNodo
+}
 
-export function normalizarEncolumnado(_a:any, _b:any){
-
+export function normalizarEncolumnado(_a:any, _b:any):ArbolReparto{
+    return { contenido:{} }
 }
 
 export type Record<T extends string> = {[x in T]: any}

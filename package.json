@@ -43,7 +43,7 @@
   },
   "scripts": {
     "tsc": "tsc",
-    "test": "npm run build-without-err && mocha --reporter spec --bail --check-leaks --exit work/test/",
+    "test": "npm run build && mocha --reporter spec --bail --check-leaks --exit work/test/",
     "test-ci": "node node_modules/nyc/bin/nyc --reporter=lcov --reporter=text-lcov node_modules/mocha/bin/_mocha --exit --check-leaks work/test/*.js",
     "test-cov": "nyc node_modules/mocha/bin/_mocha --exit --check-leaks work/test/*.js",
     "build": "tsc -p tsconfig-tool.json && tsc -p tsconfig-test.json",

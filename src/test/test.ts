@@ -7,13 +7,15 @@
 /* global it */
 
 import {promises as fs} from 'fs';
-import { ArbolReparto, normalizarEncolumnado, reparto, repartoSumarValorElegido } from "../tool/reparto";
-import { strict as assert } from 'assert';
+import { ArbolReparto, ArbolResultado, 
+    normalizarEncolumnado, reparto, repartoSumarValorElegido, elegirColumna 
+} from "../tool/reparto";
+import * as discrepances from 'discrepances';
 
 async function compareFiles(expectedFileName:string, obtainedFileName:string){
     var expected = await fs.readFile(expectedFileName,'utf8');
     var obtained = await fs.readFile(obtainedFileName,'utf8');
-    assert.deepEqual(obtained, expected);
+    discrepances.showAndThrow(obtained, expected);
 }
 
 console.log(!!compareFiles)
@@ -42,8 +44,8 @@ describe('Reparto completo', function(){
             ]
         }
         var esperadoNormalizado = normalizarEncolumnado(esperadoEncolumnado, {jerarquia:[], codigo:'prod'})
-        var resultado = reparto(datosNormalizados)
-        assert.equal(resultado, esperadoNormalizado);
+        reparto(datosNormalizados)
+        discrepances.showAndThrow(datosNormalizados, esperadoNormalizado);
     });
     it('suma del valor que queda (de los que no se reparten o sea los elegidos)', async function(){
         var arbol:ArbolReparto = { contenido:{
@@ -68,7 +70,7 @@ describe('Reparto completo', function(){
             }}
         }};
         repartoSumarValorElegido(arbol);
-        var esperado:ArbolReparto = {
+        var esperado:ArbolResultado = {
             valorElegido:78,
             contenido:{
                 A01:{
@@ -77,15 +79,15 @@ describe('Reparto completo', function(){
                         A011:{
                             valorElegido:70,
                             contenido:{
-                                A01101:{valorOriginal:40, codigoReparto:null , valorElegido:40  },
-                                A01102:{valorOriginal:30, codigoReparto:null , valorElegido:30  },
-                                A01103:{valorOriginal:20, codigoReparto:"A01", valorElegido:null},
+                                A01101:{valorElegido:40  },
+                                A01102:{valorElegido:30  },
+                                A01103:{valorElegido:null},
                             }
                         },
                         A012:{
                             valorElegido:7,
                             contenido:{
-                                A01201:{valorOriginal: 7, codigoReparto:null , valorElegido:7},
+                                A01201:{valorElegido:7},
                             }
                         }
                     }
@@ -96,20 +98,51 @@ describe('Reparto completo', function(){
                         A021:{
                             valorElegido:null,
                             contenido:{
-                                A02101:{valorOriginal: 2, codigoReparto:'A' , valorElegido:null},
+                                A02101:{valorElegido:null},
                             }
                         },
                         A022:{
                             valorElegido:1,
                             contenido:{
-                                A02201:{valorOriginal: 1, codigoReparto:null , valorElegido:1},
+                                A02201:{valorElegido:1},
                             }
                         }
                     }
                 }
             }
         }
-        assert.notStrictEqual(arbol, esperado);
+        var arbolResultado = elegirColumna(arbol, 'valorElegido');
+        discrepances.showAndThrow(arbolResultado, esperado);
+    });
+    it('reparto de un nivel', async function(){
+        var arbol:ArbolReparto={
+            contenido:{
+                A01:{ contenido:{
+                    A01101:{valorOriginal:0.5, codigoReparto:null },
+                    A01102:{valorOriginal:0.3, codigoReparto:null },
+                    A01103:{valorOriginal:0.2, codigoReparto:'A01'},
+                }},
+                A02:{ contenido:{
+                    A02101:{valorOriginal:0.1, codigoReparto:null }
+                }}
+            }
+        }
+        reparto(arbol);
+        var esperado:ArbolResultado={
+            valorRepartido: 1,
+            contenido:{
+                A01:{ contenido:{
+                    A01101:{valorRepartido:0.5 + 0.2 * 0.5 / 0.8},
+                    A01102:{valorRepartido:0.3 + 0.2 * 0.3 / 0.8},
+                    A01103:{valorRepartido:null},
+                }},
+                A02:{ contenido:{
+                    A02101:{valorRepartido:0.1 }
+                }}
+            }
+        }
+        var arbolResultado = elegirColumna(arbol, 'valorRepartido');
+        discrepances.showAndThrow(arbolResultado, esperado);
     });
 });
 
@@ -117,10 +150,6 @@ describe('Reparto completo', function(){
 describe('repartirPonderaciones', function(){
     it('reparto bien simple', async function(){
         var tabla=[
-            {codigo1:'A01', codigo:'A011111', w:0.5, repartoNivel:null, repartoCodigo:null },
-            {codigo1:'A01', codigo:'A011112', w:0.3, repartoNivel:null, repartoCodigo:null },
-            {codigo1:'A01', codigo:'A011113', w:0.2, repartoNivel:1   , repartoCodigo:'A01'},
-            {codigo1:'A02', codigo:'A022222', w:0.1, repartoNivel:null, repartoCodigo:null }
         ];
         var obtenido = repartirPonderaciones(tabla);
         var esperado = [
