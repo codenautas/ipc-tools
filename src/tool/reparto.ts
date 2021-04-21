@@ -156,6 +156,66 @@ export function normalizarEncolumnado<Columna extends string>(datos:DatosEncolum
     return arbol;
 }
 
+export function encolumnarArbol(
+    arbol:ArbolResultado, 
+    opts:{productos:boolean, grupos:boolean, niveles:number}, 
+){
+    function encolumnarArbolInterior(
+        arbol:ArbolResultado, 
+        opts:{productos:boolean, grupos:boolean, niveles:number}, 
+        codigo:string|undefined, 
+        codigos:string[], 
+        encolumnado:DatosEncolumnados<string>,
+        indiceColumnas:{[k:string]: number}
+    ){
+        if(arbol.contenido ? opts.grupos : opts.productos ){
+            var linea:any[] = [...codigos];
+            let agregarColumna = (columna:string, valor:any)=>{
+                if(!(columna in indiceColumnas)){
+                    var pos = encolumnado!.columnas.push(columna) - 1;
+                    indiceColumnas[columna] = pos;
+                }else{
+                    pos = indiceColumnas[columna];
+                }
+                while(linea.length<pos-1) linea.push(null);
+                linea[pos] = valor
+            }
+            if(!arbol.contenido){
+                agregarColumna('codigo', codigo);
+            }
+            var atributo:keyof ArbolResultado;
+            for(atributo in arbol){
+                if(atributo != 'contenido'){
+                    agregarColumna(atributo, arbol[atributo]);
+                }
+            }
+            encolumnado.filas.push(linea);
+        }
+        if(arbol.contenido){
+            var codigoHijo: CodigoReparto
+            for(codigoHijo in arbol.contenido){
+                encolumnarArbolInterior(arbol.contenido[codigoHijo]!, opts, codigoHijo, [...codigos, codigoHijo], encolumnado, indiceColumnas);
+            }
+        }
+    }
+    var indiceColumnas:{[k:string]: number} = {}
+    var grupos:string[] = [];
+    for(var i=1; i<=opts.niveles; i++ ){
+        var nombreColumna = i==opts.niveles?`codigo`:`grupo${i}`;
+        grupos.push(nombreColumna);
+        indiceColumnas[nombreColumna]=i-1;
+    }
+    var encolumnado:DatosEncolumnados<string> = {
+        columnas: grupos,
+        filas: [],
+    }
+    encolumnarArbolInterior(arbol, opts, undefined, [], encolumnado, indiceColumnas)
+    for(var fila of encolumnado.filas){
+        while(fila.length<encolumnado.columnas.length) fila.push(null);
+    }
+    return encolumnado;
+}
+
 export type Record<T extends string> = {[x in T]: any}
 
 export function controlarNiveles<Keys extends string>(tabla:Record<Keys>[], columnaGrupo:Keys, columnaControlar:Keys){
@@ -204,3 +264,4 @@ export function repartirPonderaciones(tabla:RowGasto[]):RowReparto[]{
     }
     return resultado;
 }
+

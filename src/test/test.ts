@@ -8,7 +8,7 @@
 
 import {promises as fs} from 'fs';
 import { ArbolReparto, ArbolResultado, 
-    normalizarEncolumnado, reparto, repartoSumarValoresARepartir, repartoSumarValorElegidoYReparto, elegirColumna 
+    normalizarEncolumnado, reparto, repartoSumarValoresARepartir, repartoSumarValorElegidoYReparto, elegirColumna, encolumnarArbol
 } from "../tool/reparto";
 import * as discrepances from 'discrepances';
 
@@ -222,8 +222,6 @@ describe('Reparto completo', function(){
                 }}
             }
         }
-        console.log('------------- arbol')
-        console.dir(arbol, {depth:10})
         var arbolResultado = elegirColumna(arbol, 'valorRepartido');
         discrepances.showAndThrow(arbolResultado, esperado);
     });
@@ -264,6 +262,25 @@ describe('Reparto completo', function(){
         }
         discrepances.showAndThrow(datosNormalizados, esperado);
     });
+    it("encolumnar un arbol",()=>{
+        var arbol = arbol1();
+        // @ts-ignore sé eque existe en este árbol
+        arbol.contenido.A01.contenido.A011.contenido.A01103.otroDato=6;
+        var encolumnado = encolumnarArbol(arbol, {grupos:false, productos:true, niveles: 3});
+        var esperado={
+            columnas:
+                ['grupo1', 'grupo2', 'codigo', 'valorOriginal', 'codigoReparto', 'otroDato'],
+            filas:[
+                ['A01'   , 'A011'  , 'A01101', 40             , null           , null      ],
+                ['A01'   , 'A011'  , 'A01102', 30             , null           , null      ],
+                ['A01'   , 'A011'  , 'A01103', 20             , 'A01'          , 6         ],
+                ['A01'   , 'A012'  , 'A01201',  7             , null           , null      ],
+                ['A02'   , 'A021'  , 'A02101',  2             , 'A'            , null      ],
+                ['A02'   , 'A022'  , 'A02201',  1             , null           , null      ],
+            ]
+        }
+        discrepances.showAndThrow(encolumnado, esperado);
+    })
 });
 
 /*
