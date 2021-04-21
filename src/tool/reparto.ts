@@ -11,7 +11,8 @@ export type ProductoARepartir={
 }
 
 export type InfoRepartiendo = {
-    valorElegido?: number|null
+    valorElegido?: number|null // de los elementos elegidos (que no se reparten) y la suma de ellos
+    valorReparto?: number|null // de los elementos elegidos y de los repartidos en el código donde se repartan
     valorRepartido?: number|null
 }
 
@@ -32,30 +33,74 @@ export type ArbolResultado=InfoRepartiendo & {
     }|null
 }
 
+export type PendientesARepartir = {[codigo in CodigoReparto]?:number|null}
+
 /**
  * Los productos a repartir están marcado con un código en codigoReparto
  * Pasos:
+ *   1. Suma de los valores a repartir no elegidos
  *   1. Sumar el Valor de los que quedan
- * 
+ *   2. Sumar el Valor de reparto (respetando el codigoRepartir)
+ *   3. Repartir hacia abajo
  */
-export function reparto(_a:ArbolReparto){
-
+export function reparto(arbol:ArbolReparto, codigoRaiz:CodigoJerarquia){
+    var pendientes = {}
+    repartoSumarValoresARepartir(arbol, pendientes);
+    repartoSumarValorElegidoYReparto(arbol, codigoRaiz, pendientes);
+    repartoRepartirValorRepartido(arbol, 0);
 }
 
-export function repartoSumarValorElegido(arbol:ArbolReparto){
+export function repartoSumarValoresARepartir(arbol:ArbolReparto, pendientes:PendientesARepartir){
     if(!arbol.contenido){
-        arbol.valorElegido = arbol.codigoReparto ? null : arbol.valorOriginal
+        if(arbol.codigoReparto != null){
+            pendientes[arbol.codigoReparto] = (pendientes[arbol.codigoReparto] ?? 0) + arbol.valorOriginal;
+        }
     }else{
         var codigo:CodigoReparto;
-        arbol.valorElegido = 0;
         for(codigo in arbol.contenido){
             var hijo = arbol.contenido[codigo]!
-            repartoSumarValorElegido(hijo);
+            repartoSumarValoresARepartir(hijo, pendientes);
+        }
+    }
+}
+
+export function repartoSumarValorElegidoYReparto(arbol:ArbolReparto, codigoPadre:CodigoReparto, pendientes:PendientesARepartir){
+    if(!arbol.contenido){
+        arbol.valorElegido = arbol.codigoReparto ? null : arbol.valorOriginal
+        arbol.valorReparto = arbol.codigoReparto ? null : arbol.valorOriginal
+    }else{
+        var codigoHijo:CodigoReparto;
+        arbol.valorElegido = 0;
+        arbol.valorReparto = pendientes[codigoPadre] ??0;
+        for(codigoHijo in arbol.contenido){
+            var hijo = arbol.contenido[codigoHijo]!
+            repartoSumarValorElegidoYReparto(hijo, codigoHijo, pendientes);
             arbol.valorElegido += hijo.valorElegido ?? 0;
+            arbol.valorReparto += hijo.valorReparto ?? 0;
         }
     }
     if(arbol.valorElegido == 0){
         arbol.valorElegido = null;
+    }
+    if(arbol.valorReparto == 0){
+        arbol.valorReparto = null;
+    }
+}
+
+export function repartoRepartirValorRepartido(arbol:ArbolReparto, sumar:number){
+    if(!!arbol.valorElegido){
+        arbol.valorRepartido = (arbol.valorReparto??0) + sumar;
+        var repartir = arbol.valorRepartido - arbol.valorElegido;
+        if(arbol.contenido){
+            var codigo:CodigoReparto;
+            for(codigo in arbol.contenido){
+                var hijo = arbol.contenido[codigo]!
+                repartoRepartirValorRepartido(hijo, repartir * (hijo.valorElegido??0)/arbol.valorElegido);
+            }
+        }
+        if(arbol.valorElegido == 0){
+            arbol.valorElegido = null;
+        }
     }
 }
 
