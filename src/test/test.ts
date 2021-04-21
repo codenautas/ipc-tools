@@ -12,6 +12,9 @@ import { ArbolReparto, ArbolResultado,
 } from "../tool/reparto";
 import * as discrepances from 'discrepances';
 
+// @ts-ignore
+discrepances.defaultOpts.deltaNumber=0.00001;
+
 async function compareFiles(expectedFileName:string, obtainedFileName:string){
     var expected = await fs.readFile(expectedFileName,'utf8');
     var obtained = await fs.readFile(obtainedFileName,'utf8');
@@ -82,12 +85,14 @@ describe('Reparto completo', function(){
     });
     it('suma del valor que queda (de los que no se reparten o sea los elegidos)', async function(){
         var arbol = arbol1();
-        repartoSumarValorElegidoYReparto(arbol, 'A', {});
+        var pendientes = {};
+        repartoSumarValoresARepartir(arbol, pendientes);
+        repartoSumarValorElegidoYReparto(arbol, 'A', pendientes);
         var esperado:ArbolResultado = {
-            valorElegido:78,
+            valorElegido:100,
             contenido:{
                 A01:{
-                    valorElegido:77,
+                    valorElegido:97,
                     contenido:{
                         A011:{
                             valorElegido:70,

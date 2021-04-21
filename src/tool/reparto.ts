@@ -13,7 +13,8 @@ export type ProductoARepartir={
 export type InfoRepartiendo = {
     valorElegido?: number|null // de los elementos elegidos (que no se reparten) y la suma de ellos
     valorReparto?: number|null // de los elementos elegidos y de los repartidos en el código donde se repartan
-    valorRepartido?: number|null
+    valorAgregado?: number|null // lo nuevo que tiene el nodo
+    valorRepartido?: number|null // el resultado final 
 }
 
 export type JerarquiaARepartir={
@@ -70,13 +71,16 @@ export function repartoSumarValorElegidoYReparto(arbol:ArbolReparto, codigoPadre
         arbol.valorReparto = arbol.codigoReparto ? null : arbol.valorOriginal
     }else{
         var codigoHijo:CodigoReparto;
-        arbol.valorElegido = 0;
-        arbol.valorReparto = pendientes[codigoPadre] ??0;
+        if(pendientes[codigoPadre]){
+            arbol.valorAgregado = pendientes[codigoPadre];
+        }
+        arbol.valorElegido = arbol.valorAgregado ?? 0;
+        arbol.valorReparto = arbol.valorAgregado ?? 0;
         for(codigoHijo in arbol.contenido){
             var hijo = arbol.contenido[codigoHijo]!
             repartoSumarValorElegidoYReparto(hijo, codigoHijo, pendientes);
-            arbol.valorElegido += hijo.valorElegido ?? 0;
-            arbol.valorReparto += hijo.valorReparto ?? 0;
+            arbol.valorElegido += hijo.valorElegido ? (hijo.valorReparto ?? 0) : 0;
+            arbol.valorReparto += (hijo.valorReparto ?? 0);
         }
     }
     if(arbol.valorElegido == 0){
@@ -90,17 +94,16 @@ export function repartoSumarValorElegidoYReparto(arbol:ArbolReparto, codigoPadre
 export function repartoRepartirValorRepartido(arbol:ArbolReparto, sumar:number){
     if(!!arbol.valorElegido){
         arbol.valorRepartido = (arbol.valorReparto??0) + sumar;
-        var repartir = arbol.valorRepartido - arbol.valorElegido;
+        var repartir = arbol.valorRepartido - arbol.valorElegido + (arbol.valorAgregado ?? 0);
         if(arbol.contenido){
             var codigo:CodigoReparto;
             for(codigo in arbol.contenido){
                 var hijo = arbol.contenido[codigo]!
-                repartoRepartirValorRepartido(hijo, repartir * (hijo.valorElegido??0)/arbol.valorElegido);
+                repartoRepartirValorRepartido(hijo, repartir * (hijo.valorElegido??0)/(arbol.valorElegido - (arbol.valorAgregado ?? 0)));
             }
         }
-        if(arbol.valorElegido == 0){
-            arbol.valorElegido = null;
-        }
+    }else{
+        arbol.valorRepartido = null;
     }
 }
 
