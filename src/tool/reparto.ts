@@ -121,8 +121,39 @@ export function elegirColumna(arbol:ArbolReparto, columna:keyof InfoRepartiendo)
     return nuevoNodo
 }
 
-export function normalizarEncolumnado(_a:any, _b:any):ArbolReparto{
-    return { contenido:{} }
+export type DatosEncolumnados<NombreColumna extends string> = { columnas: NombreColumna[], filas: any[][] }
+export type OpcionesNormalizarEncolumnado<NombreColumna extends string> = {
+    jerarquia:NombreColumna[], 
+    codigo:NombreColumna, 
+    codigoReparto:NombreColumna, 
+    valorOriginal:NombreColumna
+}
+
+export function normalizarEncolumnado<Columna extends string>(datos:DatosEncolumnados<Columna>, opts:OpcionesNormalizarEncolumnado<Columna>):ArbolReparto{
+    var arbol:ArbolReparto = {contenido:{}}
+    var posicionColumnas:{[k:string]:number} = {}
+    for(var i=0; i<datos.columnas.length; i++){
+        posicionColumnas[datos.columnas[i]] = i;
+    }
+    for(var fila of datos.filas){
+        var rama:ArbolReparto = arbol;
+        var contenido:NonNullable<ArbolReparto["contenido"]>;
+        var grupos = [...opts.jerarquia, opts.codigo]
+        var grupo:Columna;
+        var codigo:CodigoReparto
+        do{
+            grupo = grupos.shift()!;
+            codigo = fila[posicionColumnas[grupo]] as CodigoJerarquia
+            contenido = rama.contenido!;
+            contenido[codigo] = contenido[codigo] || {contenido:{}}
+            rama = contenido[codigo]!
+        }while(grupos.length);
+        contenido[codigo] = {
+            codigoReparto: fila[posicionColumnas[opts.codigoReparto]],
+            valorOriginal: fila[posicionColumnas[opts.valorOriginal]],
+        }
+    }
+    return arbol;
 }
 
 export type Record<T extends string> = {[x in T]: any}

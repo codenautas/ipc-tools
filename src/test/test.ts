@@ -61,6 +61,7 @@ describe('Reparto completo', function(){
                 ["A02", "A0201", 10, null ],
             ]
         }
+        // @ts-ignore
         var datosNormalizados = normalizarEncolumnado(datosEncolumnados, {jerarquia:['grupo'], codigo:'prod'});
         var esperadoEncolumnado = {
             columnas:
@@ -72,16 +73,29 @@ describe('Reparto completo', function(){
                 ["A0201", 1          ],
             ]
         }
+        // @ts-ignore
         var esperadoNormalizado = normalizarEncolumnado(esperadoEncolumnado, {jerarquia:[], codigo:'prod'})
         reparto(datosNormalizados, 'A')
         discrepances.showAndThrow(datosNormalizados, esperadoNormalizado);
     });
     it('asignación de los valores a repartir (ej: arbol1)', async function(){
         var arbol = arbol1();
-        var pendientes = {}
-        repartoSumarValoresARepartir(arbol, pendientes);
+        var resultado = {}
+        repartoSumarValoresARepartir(arbol, resultado);
         var esperado = {A: 2, A01:20};
-        discrepances.showAndThrow(pendientes, esperado);
+        discrepances.showAndThrow(resultado, esperado);
+    });
+    it('asignación de los valores a repartir con un código que recibe a dos', async function(){
+        var arbol:ArbolReparto = {contenido:{
+            A01:{contenido:{
+                A01101:{codigoReparto:'A01', valorOriginal:10},
+                A01102:{codigoReparto:'A01', valorOriginal:5},
+            }}
+        }};
+        var resultado = {}
+        repartoSumarValoresARepartir(arbol, resultado);
+        var esperado = {A01:15};
+        discrepances.showAndThrow(resultado, esperado);
     });
     it('suma del valor que queda (de los que no se reparten o sea los elegidos)', async function(){
         var arbol = arbol1();
@@ -212,6 +226,43 @@ describe('Reparto completo', function(){
         console.dir(arbol, {depth:10})
         var arbolResultado = elegirColumna(arbol, 'valorRepartido');
         discrepances.showAndThrow(arbolResultado, esperado);
+    });
+    it('normalizar encolumnados', async function(){
+        var datosEncolumnados = {
+            columnas:
+                ["grupo1", "grupo2", "prod", "gasto", "reparto"],
+            filas:[
+                ["A01"   , "A011"  , "A01101", 40   , null     ],
+                ["A01"   , "A011"  , "A01102", 30   , null     ],
+                ["A01"   , "A012"  , "A01201", 20   , "A01"    ],
+                ["A02"   , "A021"  , "A02101", 10   , null     ],
+            ]
+        }
+        var datosNormalizados = normalizarEncolumnado(datosEncolumnados, {
+            jerarquia:['grupo1', 'grupo2'], 
+            codigo:'prod', 
+            codigoReparto:'reparto', 
+            valorOriginal:'gasto'
+        });
+        var esperado:ArbolReparto = {
+            contenido:{
+                A01:{ contenido:{
+                    A011:{ contenido:{
+                        A01101:{valorOriginal:40, codigoReparto:null},
+                        A01102:{valorOriginal:30, codigoReparto:null}
+                    }},
+                    A012:{ contenido:{
+                        A01201:{valorOriginal:20, codigoReparto:'A01'},
+                    }},
+                }},
+                A02:{ contenido:{
+                    A021:{ contenido:{
+                        A02101:{valorOriginal:10, codigoReparto:null},
+                    }},
+                }},
+            }
+        }
+        discrepances.showAndThrow(datosNormalizados, esperado);
     });
 });
 
