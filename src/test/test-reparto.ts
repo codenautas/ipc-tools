@@ -9,7 +9,7 @@
 import {promises as fs} from 'fs';
 import { ArbolReparto, ArbolResultado, 
     normalizarEncolumnado, reparto, repartoSumarValoresARepartir, repartoSumarValorElegidoYReparto, 
-    elegirColumna, encolumnarArbol, enfilarArbol
+    elegirColumna, encolumnarArbol, enfilarArbol, DatosEncolumnados, OpcionesNormalizarEncolumnado
 } from "../tool/reparto";
 import * as discrepances from 'discrepances';
 
@@ -50,7 +50,8 @@ function arbol1(){
     }} as ArbolReparto
 }
 
-describe('Reparto completo', function(){
+describe('Reparto de ponderadores', function(){
+  describe('por línea directa',()=>{
     it('asignación de los valores a repartir (ej: arbol1)', async function(){
         var arbol = arbol1();
         var resultado = {}
@@ -289,10 +290,38 @@ describe('Reparto completo', function(){
         ]
         reparto(datosNormalizados, 'A');
         var resultadoEnfilado = enfilarArbol(datosNormalizados, {productos:true, grupos:false, niveles:2});
-        console.log(resultadoEnfilado)
         var resultadoReparto = resultadoEnfilado.map((row:any)=>[row.codigo, row.valorRepartido])
         discrepances.showAndThrow(resultadoReparto, repartoEsperado);
     });
+  });
+  describe("por línea indirecta", ()=>{
+    var columnas = ['grupo1', 'grupo2', 'codigo', 'w', 'reparto'];
+    var opts = {jerarquia:['grupo1', 'grupo2'], codigo:'codigo', codigoReparto:'reparto', valorOriginal:'w'};
+    function repartoEncolumnado<T extends string>(datosEncolumnados:DatosEncolumnados<T>, opts:OpcionesNormalizarEncolumnado<T>, niveles:number){
+        var arbol = normalizarEncolumnado(datosEncolumnados, opts)
+        reparto(arbol, 'A');
+        var enfilado = enfilarArbol(arbol, {productos:true, grupos:false, niveles})
+        return enfilado.map(row=>[row.codigo, row.valorRepartido])
+    }
+    it("reparte a un hermano", ()=>{
+        var resultado = repartoEncolumnado({
+            columnas,
+            filas:[
+                ["A01", "A011","A01101", 40, null    ],
+                ["A01", "A011","A01102", 30, null    ],
+                ["A01", "A011","A01103", 10, "A01102"],
+                ["A02", "A021","A02101", 20, 'A'     ],
+            ]
+        }, opts, 3)
+        var esperado = [
+            ["A01101", 50  ],
+            ["A01102", 50  ],
+            ["A01103", null],
+            ["A02101", null],
+        ];
+        discrepances.showAndThrow(resultado, esperado);
+    })
+  })
 });
 
 /*
