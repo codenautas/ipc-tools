@@ -61,8 +61,7 @@ describe('Reparto completo', function(){
                 ["A02", "A0201", 10, null ],
             ]
         }
-        // @ts-ignore
-        var datosNormalizados = normalizarEncolumnado(datosEncolumnados, {jerarquia:['grupo'], codigo:'prod'});
+        var datosNormalizados = normalizarEncolumnado(datosEncolumnados, {jerarquia:['grupo'], codigo:'prod', codigoReparto:'reparto', valorOriginal:'gasto'});
         var esperadoEncolumnado = {
             columnas:
                 ["prod", "proporcion"],
