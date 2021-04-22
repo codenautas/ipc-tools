@@ -50,7 +50,7 @@ function arbol1(){
 }
 
 describe('Reparto completo', function(){
-    it.skip('reparto de un nivel', async function(){
+    it('reparto de un nivel', async function(){
         var datosEncolumnados = {
             columnas:
                 ["grupo", "prod", "gasto", "reparto"],
