@@ -9,7 +9,7 @@
 import {promises as fs} from 'fs';
 import { ArbolReparto, ArbolResultado, 
     normalizarEncolumnado, reparto, repartoSumarValoresARepartir, repartoSumarValorElegidoYReparto, 
-    elegirColumna, encolumnarArbol, enfilarArbol, DatosEncolumnados, OpcionesNormalizarEncolumnado
+    elegirColumna, encolumnarArbol, enfilarArbol, repartoEncolumnado
 } from "../tool/reparto";
 import * as discrepances from 'discrepances';
 
@@ -297,12 +297,6 @@ describe('Reparto de ponderadores', function(){
   describe("por línea indirecta", ()=>{
     var columnas = ['grupo1', 'grupo2', 'codigo', 'w', 'reparto'];
     var opts = {jerarquia:['grupo1', 'grupo2'], codigo:'codigo', codigoReparto:'reparto', valorOriginal:'w'};
-    function repartoEncolumnado<T extends string>(datosEncolumnados:DatosEncolumnados<T>, opts:OpcionesNormalizarEncolumnado<T>, niveles:number){
-        var arbol = normalizarEncolumnado(datosEncolumnados, opts)
-        reparto(arbol, 'A');
-        var enfilado = enfilarArbol(arbol, {productos:true, grupos:false, niveles})
-        return enfilado.map(row=>[row.codigo, row.valorRepartido])
-    }
     it("reparte a un hermano", ()=>{
         var resultado = repartoEncolumnado({
             columnas,
@@ -312,7 +306,7 @@ describe('Reparto de ponderadores', function(){
                 ["A01", "A011","A01103", 10, "A01102"],
                 ["A02", "A021","A02101", 20, 'A'     ],
             ]
-        }, opts, 3)
+        }, opts, 3, 'A')
         var esperado = [
             ["A01101", 50  ],
             ["A01102", 50  ],
@@ -331,7 +325,7 @@ describe('Reparto de ponderadores', function(){
                 ["A01", "A012","A01202", 16, "A01"   ],
                 ["A02", "A021","A02101",  4, null    ],
             ]
-        }, opts, 3)
+        }, opts, 3, 'A')
         var esperado = [
             ["A01101", 48  ],
             ["A01102", 36  ],
@@ -343,19 +337,3 @@ describe('Reparto de ponderadores', function(){
     })
   })
 });
-
-/*
-describe('repartirPonderaciones', function(){
-    it('reparto bien simple', async function(){
-        var tabla=[
-        ];
-        var obtenido = repartirPonderaciones(tabla);
-        var esperado = [
-            {codigo:'A011111', wr:0.5 + 0.2 * 0.5 / 0.8},
-            {codigo:'A011112', wr:0.3 + 0.2 * 0.3 / 0.8},
-            {codigo:'A022222', wr:0.1},
-        ];
-        assert.deepEqual(obtenido, esperado)
-    });
-});
-*/
