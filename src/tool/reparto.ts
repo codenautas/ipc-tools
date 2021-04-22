@@ -160,7 +160,7 @@ type DatosEnfilados={
     [columnas: string]: any,
 }
 
-export function enfilarArbol(    arbol:ArbolResultado, 
+export function enfilarArbol(arbol:ArbolResultado, 
     opts:{productos:boolean, grupos:boolean, niveles:number}, 
 ){
     function enfilarArbolInterior(
@@ -210,65 +210,61 @@ export function enfilarArbol(    arbol:ArbolResultado,
     return enfilado;
 }
 
-export function encolumnarArbol(
-    arbol:ArbolResultado, 
-    opts:{productos:boolean, grupos:boolean, niveles:number}, 
+export function encolumnarEnfilado(
+    enfilado:DatosEnfilados[],
+    columnasIniciales?:string[],
+    niveles?:number
 ){
-    function encolumnarArbolInterior(
-        arbol:ArbolResultado, 
-        opts:{productos:boolean, grupos:boolean, niveles:number}, 
-        codigo:string|undefined, 
-        codigos:string[], 
-        encolumnado:DatosEncolumnados<string>,
-        indiceColumnas:{[k:string]: number}
-    ){
-        if(arbol.contenido ? opts.grupos : opts.productos ){
-            var linea:any[] = [...codigos];
-            let agregarColumna = (columna:string, valor:any)=>{
-                if(!(columna in indiceColumnas)){
-                    var pos = encolumnado!.columnas.push(columna) - 1;
-                    indiceColumnas[columna] = pos;
-                }else{
-                    pos = indiceColumnas[columna];
-                }
-                while(linea.length<pos-1) linea.push(null);
-                linea[pos] = valor
-            }
-            if(!arbol.contenido){
-                agregarColumna('codigo', codigo);
-            }
-            var atributo:keyof ArbolResultado;
-            for(atributo in arbol){
-                if(atributo != 'contenido'){
-                    agregarColumna(atributo, arbol[atributo]);
-                }
-            }
-            encolumnado.filas.push(linea);
-        }
-        if(arbol.contenido){
-            var codigoHijo: CodigoReparto
-            for(codigoHijo in arbol.contenido){
-                encolumnarArbolInterior(arbol.contenido[codigoHijo]!, opts, codigoHijo, [...codigos, codigoHijo], encolumnado, indiceColumnas);
-            }
-        }
-    }
     var indiceColumnas:{[k:string]: number} = {}
-    var grupos:string[] = [];
-    for(var i=1; i<=opts.niveles; i++ ){
-        var nombreColumna = i==opts.niveles?`codigo`:`grupo${i}`;
-        grupos.push(nombreColumna);
-        indiceColumnas[nombreColumna]=i-1;
+    var columnas:string[] = [];
+    for(let i=1; i<=(niveles||0); i++ ){
+        let columna = i==niveles?`codigo`:`grupo${i}`
+        indiceColumnas[columna] = columnas.push(columna)-1;
+    }
+    if(columnasIniciales!=null){
+        for(let columna in columnasIniciales){
+            if(!indiceColumnas[columna]){
+                indiceColumnas[columna] = columnas.push(columna)-1;
+            }
+        }
     }
     var encolumnado:DatosEncolumnados<string> = {
-        columnas: grupos,
+        columnas,
         filas: [],
     }
-    encolumnarArbolInterior(arbol, opts, undefined, [], encolumnado, indiceColumnas)
+    for(var row of enfilado){
+        var linea:any[]=[];
+        let agregarColumna = (columna:string, valor:any)=>{
+            if(!(columna in indiceColumnas)){
+                var pos = encolumnado!.columnas.push(columna) - 1;
+                indiceColumnas[columna] = pos;
+            }else{
+                pos = indiceColumnas[columna];
+            }
+            while(linea.length<pos-1) linea.push(null);
+            linea[pos] = valor
+        }
+        var atributo:keyof typeof row;
+        for(atributo in row){
+            agregarColumna(atributo, row[atributo]);
+        }
+        encolumnado.filas.push(linea);
+    }
     for(var fila of encolumnado.filas){
         while(fila.length<encolumnado.columnas.length) fila.push(null);
     }
     return encolumnado;
 }
+
+
+export function encolumnarArbol(
+    arbol:ArbolResultado, 
+    opts:{productos:boolean, grupos:boolean, niveles:number}, 
+){
+    var enfilado = enfilarArbol(arbol, opts);
+    return encolumnarEnfilado(enfilado, [], opts.niveles)
+}
+
 
 export type Record<T extends string> = {[x in T]: any}
 
