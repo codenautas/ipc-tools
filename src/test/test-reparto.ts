@@ -321,6 +321,26 @@ describe('Reparto de ponderadores', function(){
         ];
         discrepances.showAndThrow(resultado, esperado);
     })
+    it("reparte a un tío", ()=>{
+        var resultado = repartoEncolumnado({
+            columnas,
+            filas:[
+                ["A01", "A011","A01101", 40, null    ],
+                ["A01", "A011","A01102", 30, null    ],
+                ["A01", "A012","A01201", 10, null    ],
+                ["A01", "A012","A01202", 16, "A01"   ],
+                ["A02", "A021","A02101",  4, null    ],
+            ]
+        }, opts, 3)
+        var esperado = [
+            ["A01101", 48  ],
+            ["A01102", 36  ],
+            ["A01201", 12  ],
+            ["A01202", null],
+            ["A02101", 4   ],
+        ];
+        discrepances.showAndThrow(resultado, esperado);
+    })
   })
 });
 
