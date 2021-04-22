@@ -8,7 +8,8 @@
 
 import {promises as fs} from 'fs';
 import { ArbolReparto, ArbolResultado, 
-    normalizarEncolumnado, reparto, repartoSumarValoresARepartir, repartoSumarValorElegidoYReparto, elegirColumna, encolumnarArbol
+    normalizarEncolumnado, reparto, repartoSumarValoresARepartir, repartoSumarValorElegidoYReparto, 
+    elegirColumna, encolumnarArbol, enfilarArbol
 } from "../tool/reparto";
 import * as discrepances from 'discrepances';
 
@@ -50,33 +51,6 @@ function arbol1(){
 }
 
 describe('Reparto completo', function(){
-    it('reparto de un nivel', async function(){
-        var datosEncolumnados = {
-            columnas:
-                ["grupo", "prod", "gasto", "reparto"],
-            filas:[
-                ["A01", "A0101", 40, null ],
-                ["A01", "A0102", 30, null ],
-                ["A01", "A0103", 20, "A01"],
-                ["A02", "A0201", 10, null ],
-            ]
-        }
-        var datosNormalizados = normalizarEncolumnado(datosEncolumnados, {jerarquia:['grupo'], codigo:'prod', codigoReparto:'reparto', valorOriginal:'gasto'});
-        var esperadoEncolumnado = {
-            columnas:
-                ["prod", "proporcion"],
-            filas:[
-                ["A0101", 0,571428571],
-                ["A0102", 0,428571429],
-                ["A0103", null       ],
-                ["A0201", 1          ],
-            ]
-        }
-        // @ts-ignore
-        var esperadoNormalizado = normalizarEncolumnado(esperadoEncolumnado, {jerarquia:[], codigo:'prod'})
-        reparto(datosNormalizados, 'A')
-        discrepances.showAndThrow(datosNormalizados, esperadoNormalizado);
-    });
     it('asignación de los valores a repartir (ej: arbol1)', async function(){
         var arbol = arbol1();
         var resultado = {}
@@ -261,6 +235,21 @@ describe('Reparto completo', function(){
         }
         discrepances.showAndThrow(datosNormalizados, esperado);
     });
+    it("enfilar un arbol",()=>{
+        var arbol = arbol1();
+        // @ts-ignore sé eque existe en este árbol
+        arbol.contenido.A01.contenido.A011.contenido.A01103.otroDato=6;
+        var encolumnado = enfilarArbol(arbol, {grupos:false, productos:true, niveles: 3});
+        var esperado=[
+            {grupo1: 'A01', grupo2: 'A011'  ,codigo: 'A01101', valorOriginal: 40, codigoReparto: null },
+            {grupo1: 'A01', grupo2: 'A011'  ,codigo: 'A01102', valorOriginal: 30, codigoReparto: null },
+            {grupo1: 'A01', grupo2: 'A011'  ,codigo: 'A01103', valorOriginal: 20, codigoReparto: 'A01', otroDato: 6   },
+            {grupo1: 'A01', grupo2: 'A012'  ,codigo: 'A01201', valorOriginal:  7, codigoReparto: null },
+            {grupo1: 'A02', grupo2: 'A021'  ,codigo: 'A02101', valorOriginal:  2, codigoReparto: 'A'  },
+            {grupo1: 'A02', grupo2: 'A022'  ,codigo: 'A02201', valorOriginal:  1, codigoReparto: null },
+        ]
+        discrepances.showAndThrow(encolumnado, esperado);
+    })
     it("encolumnar un arbol",()=>{
         var arbol = arbol1();
         // @ts-ignore sé eque existe en este árbol
@@ -280,6 +269,30 @@ describe('Reparto completo', function(){
         }
         discrepances.showAndThrow(encolumnado, esperado);
     })
+    it('reparto de un nivel', async function(){
+        var datosEncolumnados = {
+            columnas:
+                ["grupo", "prod", "gasto", "reparto"],
+            filas:[
+                ["A01", "A0101", 40, null ],
+                ["A01", "A0102", 30, null ],
+                ["A01", "A0103", 20, "A01"],
+                ["A02", "A0201", 10, null ],
+            ]
+        }
+        var datosNormalizados = normalizarEncolumnado(datosEncolumnados, {jerarquia:['grupo'], codigo:'prod', codigoReparto:'reparto', valorOriginal:'gasto'});
+        var repartoEsperado = [
+            ["A0101", 51.4285714],
+            ["A0102", 38.5714285],
+            ["A0103", null      ],
+            ["A0201", 10        ],
+        ]
+        reparto(datosNormalizados, 'A');
+        var resultadoEnfilado = enfilarArbol(datosNormalizados, {productos:true, grupos:false, niveles:2});
+        console.log(resultadoEnfilado)
+        var resultadoReparto = resultadoEnfilado.map((row:any)=>[row.codigo, row.valorRepartido])
+        discrepances.showAndThrow(resultadoReparto, repartoEsperado);
+    });
 });
 
 /*

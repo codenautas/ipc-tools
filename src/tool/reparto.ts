@@ -156,6 +156,60 @@ export function normalizarEncolumnado<Columna extends string>(datos:DatosEncolum
     return arbol;
 }
 
+type DatosEnfilados={
+    [columnas: string]: any,
+}
+
+export function enfilarArbol(    arbol:ArbolResultado, 
+    opts:{productos:boolean, grupos:boolean, niveles:number}, 
+){
+    function enfilarArbolInterior(
+        arbol:ArbolResultado, 
+        opts:{productos:boolean, grupos:boolean, niveles:number}, 
+        codigo:string|undefined, 
+        codigos:{[campo:string]:CodigoReparto}, 
+        enfilado:DatosEnfilados[],
+        nivel:number
+    ){
+        if(arbol.contenido ? opts.grupos : opts.productos ){
+            var linea:DatosEnfilados = {...codigos};
+            if(!arbol.contenido){
+                linea.codigo = codigo;
+            }
+            var atributo:keyof ArbolResultado;
+            for(atributo in arbol){
+                if(atributo != 'contenido'){
+                    linea[atributo] = arbol[atributo];
+                }
+            }
+            enfilado.push(linea);
+        }
+        if(arbol.contenido){
+            var codigoHijo: CodigoReparto
+            for(codigoHijo in arbol.contenido){
+                enfilarArbolInterior(
+                    arbol.contenido[codigoHijo]!, 
+                    opts, 
+                    codigoHijo, 
+                    {...codigos, [nivel==opts.niveles?'codigo':`grupo${nivel}`]: codigoHijo}, 
+                    enfilado, 
+                    nivel+1
+                );
+            }
+        }
+    }
+    var indiceColumnas:{[k:string]: number} = {}
+    var grupos:string[] = [];
+    for(var i=1; i<=opts.niveles; i++ ){
+        var nombreColumna = i==opts.niveles?`codigo`:`grupo${i}`;
+        grupos.push(nombreColumna);
+        indiceColumnas[nombreColumna]=i-1;
+    }
+    var enfilado:DatosEnfilados[] = [];
+    enfilarArbolInterior(arbol, opts, undefined, {}, enfilado, 1)
+    return enfilado;
+}
+
 export function encolumnarArbol(
     arbol:ArbolResultado, 
     opts:{productos:boolean, grupos:boolean, niveles:number}, 
