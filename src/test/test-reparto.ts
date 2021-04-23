@@ -120,55 +120,6 @@ describe('Reparto de ponderadores', function(){
         var arbolResultado = elegirColumna(arbol, 'valorElegido');
         discrepances.showAndThrow(arbolResultado, esperado);
     });
-    it('suma del valor elegido en los niveles superiores (todo tiene que sumar en algún lugar)', async function(){
-        var arbol = arbol1();
-        var pendientes = {}
-        repartoSumarValoresARepartir(arbol, pendientes);
-        repartoSumarValorElegidoYReparto(arbol, 'A', pendientes);
-        var esperado:ArbolResultado = {
-            valorReparto:100,
-            contenido:{
-                A01:{
-                    valorReparto:97,
-                    contenido:{
-                        A011:{
-                            valorReparto:70,
-                            contenido:{
-                                A01101:{valorReparto:40  },
-                                A01102:{valorReparto:30  },
-                                A01103:{valorReparto:null },
-                            }
-                        },
-                        A012:{
-                            valorReparto:7,
-                            contenido:{
-                                A01201:{valorReparto:7},
-                            }
-                        }
-                    }
-                },
-                A02:{
-                    valorReparto:1,
-                    contenido:{
-                        A021:{
-                            valorReparto:null,
-                            contenido:{
-                                A02101:{valorReparto:null},
-                            }
-                        },
-                        A022:{
-                            valorReparto:1,
-                            contenido:{
-                                A02201:{valorReparto:1},
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        var arbolResultado = elegirColumna(arbol, 'valorReparto');
-        discrepances.showAndThrow(arbolResultado, esperado);
-    });
     it('reparto de un nivel', async function(){
         var arbol:ArbolReparto={
             contenido:{
@@ -248,6 +199,31 @@ describe('Reparto de ponderadores', function(){
             {grupo1: 'A01', grupo2: 'A012'  ,codigo: 'A01201', valorOriginal:  7, codigoReparto: null },
             {grupo1: 'A02', grupo2: 'A021'  ,codigo: 'A02101', valorOriginal:  2, codigoReparto: 'A'  },
             {grupo1: 'A02', grupo2: 'A022'  ,codigo: 'A02201', valorOriginal:  1, codigoReparto: null },
+        ]
+        discrepances.showAndThrow(encolumnado, esperado);
+    })
+    it("enfilar un arbol con grupos",()=>{
+        var arbol = arbol1();
+        // @ts-ignore sé eque existe en este árbol
+        arbol.contenido.A01.contenido.A011.contenido.A01103.otroDato=6;
+        var pendientes = {};
+        repartoSumarValoresARepartir(arbol, pendientes);
+        repartoSumarValorElegidoYReparto(arbol, 'A', pendientes);
+        var encolumnado = enfilarArbol(arbol, {grupos:true, productos:true, niveles: 3});
+        var esperado=[
+            {nivel:0                                , valorAgregado:2 , valorElegido:100 },
+            {nivel:1, grupo1: 'A01'                 , valorAgregado:20, valorElegido:97  },
+            {nivel:2, grupo1: 'A01', grupo2: 'A011' ,                   valorElegido:70  },
+            {nivel:3, grupo1: 'A01', grupo2: 'A011'  ,codigo: 'A01101', valorElegido: 40 , valorOriginal: 40, codigoReparto: null },
+            {nivel:3, grupo1: 'A01', grupo2: 'A011'  ,codigo: 'A01102', valorElegido: 30 , valorOriginal: 30, codigoReparto: null },
+            {nivel:3, grupo1: 'A01', grupo2: 'A011'  ,codigo: 'A01103', valorElegido:null, valorOriginal: 20, codigoReparto: 'A01', otroDato: 6   },
+            {nivel:2, grupo1: 'A01', grupo2: 'A012' ,                   valorElegido: 7  },
+            {nivel:3, grupo1: 'A01', grupo2: 'A012'  ,codigo: 'A01201', valorElegido: 7, valorOriginal:  7, codigoReparto: null },
+            {nivel:1, grupo1: 'A02'                 ,                   valorElegido: 1  },
+            {nivel:2, grupo1: 'A02', grupo2: 'A021' ,                   valorElegido:null},
+            {nivel:3, grupo1: 'A02', grupo2: 'A021'  ,codigo: 'A02101', valorElegido:null, valorOriginal:  2, codigoReparto: 'A'  },
+            {nivel:2, grupo1: 'A02', grupo2: 'A022' ,                   valorElegido: 1  },
+            {nivel:3, grupo1: 'A02', grupo2: 'A022'  ,codigo: 'A02201', valorElegido: 1  , valorOriginal:  1, codigoReparto: null },
         ]
         discrepances.showAndThrow(encolumnado, esperado);
     })

@@ -12,7 +12,6 @@ export type ProductoARepartir={
 
 export type InfoRepartiendo = {
     valorElegido?: number|null // de los elementos elegidos (que no se reparten) y la suma de ellos
-    valorReparto?: number|null // de los elementos elegidos y de los repartidos en el código donde se repartan
     valorAgregado?: number|null // lo nuevo que tiene el nodo
     valorRepartido?: number|null // el resultado final 
 }
@@ -71,29 +70,23 @@ export function repartoSumarValorElegidoYReparto(arbol:ArbolReparto, codigo:Codi
     }
     if(!arbol.contenido){
         arbol.valorElegido = arbol.codigoReparto ? null : arbol.valorOriginal + (arbol.valorAgregado??0)
-        arbol.valorReparto = arbol.codigoReparto ? null : arbol.valorOriginal + (arbol.valorAgregado??0)
     }else{
         var codigoHijo:CodigoReparto;
         arbol.valorElegido = arbol.valorAgregado ?? 0;
-        arbol.valorReparto = arbol.valorAgregado ?? 0;
         for(codigoHijo in arbol.contenido){
             var hijo = arbol.contenido[codigoHijo]!
             repartoSumarValorElegidoYReparto(hijo, codigoHijo, pendientes);
-            arbol.valorElegido += hijo.valorElegido ? (hijo.valorReparto ?? 0) : 0;
-            arbol.valorReparto += (hijo.valorReparto ?? 0);
+            arbol.valorElegido += hijo.valorElegido ?? 0;
         }
     }
     if(arbol.valorElegido == 0){
         arbol.valorElegido = null;
     }
-    if(arbol.valorReparto == 0){
-        arbol.valorReparto = null;
-    }
 }
 
 export function repartoRepartirValorRepartido(arbol:ArbolReparto, sumar:number){
     if(arbol.valorElegido){
-        arbol.valorRepartido = (arbol.valorReparto??0) + sumar;
+        arbol.valorRepartido = (arbol.valorElegido??0) + sumar;
         var repartir = (arbol.valorRepartido - arbol.valorElegido + (arbol.valorAgregado ?? 0)) / (arbol.valorElegido - (arbol.valorAgregado ?? 0));
     }else{
         arbol.valorRepartido = null;
@@ -173,7 +166,8 @@ export function enfilarArbol(arbol:ArbolResultado,
         nivel:number
     ){
         if(arbol.contenido ? opts.grupos : opts.productos ){
-            var linea:DatosEnfilados = {...codigos};
+            var nivelO=opts.grupos?{nivel:nivel-1}:{}
+            var linea:DatosEnfilados = {...nivelO, ...codigos};
             if(!arbol.contenido){
                 linea.codigo = codigo;
             }
@@ -198,13 +192,6 @@ export function enfilarArbol(arbol:ArbolResultado,
                 );
             }
         }
-    }
-    var indiceColumnas:{[k:string]: number} = {}
-    var grupos:string[] = [];
-    for(var i=1; i<=opts.niveles; i++ ){
-        var nombreColumna = i==opts.niveles?`codigo`:`grupo${i}`;
-        grupos.push(nombreColumna);
-        indiceColumnas[nombreColumna]=i-1;
     }
     var enfilado:DatosEnfilados[] = [];
     enfilarArbolInterior(arbol, opts, undefined, {}, enfilado, 1)
