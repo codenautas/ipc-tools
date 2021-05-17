@@ -44,11 +44,11 @@
   },
   "scripts": {
     "tsc": "tsc",
-    "test": "npm run build && mocha --reporter spec --bail --check-leaks --exit work/test/",
+    "test": "npm run build-we && mocha --reporter spec --bail --check-leaks --exit work/test/",
     "test-ci": "node node_modules/nyc/bin/nyc --reporter=lcov --reporter=text-lcov node_modules/mocha/bin/_mocha --exit --check-leaks work/test/*.js",
     "test-cov": "nyc node_modules/mocha/bin/_mocha --exit --check-leaks work/test/*.js",
-    "build": "tsc -p tsconfig-tool.json && tsc -p tsconfig-test.json && mixin-patch",
-    "build-without-err": "(tsc -p tsconfig-tool.json || echo \"continue w/error\") && (tsc -p tsconfig-test.json  || echo \"continue w/error\")"
+    "build": "tsc -p src/tool/tsconfig.json && tsc -p src/test && mixin-patch",
+    "build-we": "(tsc -p tsconfig-tool.json || echo \"continue w/error\") && (tsc -p tsconfig-test.json  || echo \"continue w/error\") && mixin-patch"
   },
   "nyc": {
     "extension": [
