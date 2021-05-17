@@ -9,7 +9,8 @@
 import {promises as fs} from 'fs';
 import { ArbolReparto, ArbolResultado, 
     normalizarEncolumnado, reparto, repartoSumarValoresARepartir, repartoSumarValorElegidoYReparto, 
-    elegirColumna, encolumnarArbol, enfilarArbol, repartoEncolumnado
+    elegirColumna, encolumnarArbol, enfilarArbol, repartoEncolumnado,
+    encolumnarXlsxBlob
 } from "../tool/reparto";
 import * as discrepances from 'discrepances';
 
@@ -309,6 +310,21 @@ describe('Reparto de ponderadores', function(){
             ["A01202", null],
             ["A02101", 4   ],
         ];
+        discrepances.showAndThrow(resultado, esperado);
+    })
+    it("desde xlsx", async ()=>{
+        var buffer = await fs.readFile('work/test/fixture-reparte-tio.xlsx')
+        var resultado = await encolumnarXlsxBlob(new Uint8Array(buffer));
+        var esperado = {
+            columnas,
+            filas:[
+                ["A01", "A011","A01101", 4  , null    ],
+                ["A01", "A011","A01102", 3  , null    ],
+                ["A01", "A012","A01201", 1  , null    ],
+                ["A01", "A012","A01202", 1.6, "A01"   ],
+                ["A02", "A021","A02101", 0.4, null    ],
+            ]
+        }
         discrepances.showAndThrow(resultado, esperado);
     })
   })

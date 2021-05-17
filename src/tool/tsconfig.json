@@ -1,6 +1,6 @@
 {
     "compilerOptions": {
-        "outDir": "../../dist/tool",
+        "outDir": "../../dist",
         "module": "none",
         "lib": ["es2019"]
     },

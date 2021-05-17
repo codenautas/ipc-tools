@@ -1,5 +1,7 @@
 "use strict";
 
+import * as XLSX from 'xlsx';
+
 export type CodigoProducto = 'P0001'|'P0002'|'etc...'|'A01101'|'A01102'|'A01103'|'A01201'|'A02101'|'A01201'|'A02201'
 export type CodigoJerarquia = 'A'|'A1'|'A11'|'A2'|'etc...'|'A01'|'A02'|'A011'|'A012'|'A022'|'A021'
 export type CodigoReparto =  CodigoJerarquia | CodigoProducto
@@ -258,4 +260,40 @@ export function repartoEncolumnado<T extends string>(datosEncolumnados:DatosEnco
     reparto(arbol, grupoRaiz);
     var enfilado = enfilarArbol(arbol, {productos:true, grupos:false, niveles})
     return enfilado.map(row=>[row.codigo, row.valorRepartido])
+}
+
+function emptyCell(cell:XLSX.CellObject|null){
+    return cell == null || cell.v == null || cell.v=='';
+}
+
+export async function encolumnarXlsxBlob(uia:Uint8Array){
+    var wb = XLSX.read(uia,{type:'array'});
+    var sheetName = wb.SheetNames[0];
+    if(sheetName == null){
+        throw new Error("No hay hojas el en Excel");
+    }
+    var ws = wb.Sheets[sheetName];
+    var columnas:string[]=[];
+    var c=0;
+    do{
+        var cell = ws[XLSX.utils.encode_cell({c, r:0})]
+    if(emptyCell(cell)) break;
+        columnas.push(cell.v);
+        c++;
+    }while(true);
+    var cCount = c;
+    var r=1;
+    var filas:(number|string|null)[][]=[];
+    do{
+        let cell = ws[XLSX.utils.encode_cell({c:0, r})]
+    if(emptyCell(cell)) break;
+        var row:any[]=[];
+        for(var i=0; i<cCount; i++){
+            let cell = ws[XLSX.utils.encode_cell({c:i, r})];
+            row.push(emptyCell(cell)?null:cell.v);
+        }
+        filas.push(row);
+        r++;
+    }while(true);
+    return { columnas, filas }
 }
