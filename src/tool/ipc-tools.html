@@ -8,14 +8,16 @@
         <div id=cargando>cargando...</div>
         <div id=reparto-tool style='display:none'>
             <p><label>Excel original <input id=files type=file></label></p>
+            <p id=preview></p>
             <p><label>Parametros <input id=reaprto-tool-params></label></p>
-            <p><button id=descargar>descargar resultado</button></p>
+            <p><button id=procesar>procesar</button></p>
         </div>
         <script src=xlsx/xlsx.full.min.js></script>
         <script src=require-bro/require-bro.js></script>
         <script>
             window.requireBro.definedModules.xlsx=XLSX
         </script>
+        <script src=reparto.js></script>
         <script src=web-ipc-tools.js></script>
     </body>
 </html>
