@@ -9,10 +9,12 @@
         <div id=reparto-tool style='display:none'>
             <p><label>Excel original <input id=files type=file></label></p>
             <p id=preview></p>
-            <p><label>Parametros <input id=reaprto-tool-params></label></p>
+            <p><label>Parametros <input id=reaprto-tool-params style="width:90%" value='codigo=Producto_N6&valorOriginal=W&codigoReparto=Código_rep&jerarquia=Padre_N1,Padre_N2,Padre_N3,Padre_N4&niveles=5&grupoRaiz=A'></label></p>
+            <p><label><input type="checkbox" id="completo">Completo con grupos para revisar cálculos intermedios</label></p>
             <p><button id=procesar>procesar</button></p>
         </div>
         <script src=xlsx/xlsx.full.min.js></script>
+        <script src=like-ar/like-ar.js></script>
         <script src=require-bro/require-bro.js></script>
         <script>
             window.requireBro.definedModules.xlsx=XLSX

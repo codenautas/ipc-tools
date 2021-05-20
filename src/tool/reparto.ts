@@ -263,7 +263,7 @@ export function repartoEncolumnado<T extends string>(datosEncolumnados:DatosEnco
 }
 
 function emptyCell(cell:XLSX.CellObject|null){
-    return cell == null || cell.v == null || cell.v=='';
+    return cell == null || cell.v == null || cell.v=='' || typeof cell.v === 'string' && cell.v.trim()=='';
 }
 
 export async function encolumnarXlsxBlob(uia:Uint8Array){

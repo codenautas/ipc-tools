@@ -15,6 +15,7 @@
     }
   ],
   "dependencies": {
+    "like-ar": "^0.3.3",
     "xlsx": "~0.17.0"
   },
   "devDependencies": {
@@ -91,6 +92,10 @@
       {
         "from": "node_modules/require-bro/lib",
         "to": "dist/require-bro"
+      },
+      {
+        "from": "node_modules/like-ar",
+        "to": "dist/like-ar"
       }
     ]
   },
